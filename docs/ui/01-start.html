@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zac</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #000000;
+      --primary: #E100FF;
+      --secondary: #FF0040;
+      --text: #FFFFFF;
+      --font-title: 36px;
+      --font-heading: 28px;
+      --font-subtitle: 20px;
+      --font-body: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--background);
+      color: var(--text);
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      font-size: var(--font-body);
+      line-height: 1.5;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10;
+      width: 100%;
+      padding: 20px;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      width: min(1120px, 100%);
+      min-height: 64px;
+      margin: 0 auto;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.78);
+      padding: 10px 12px 10px 18px;
+      backdrop-filter: blur(18px);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.38);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 40px;
+      font-size: var(--font-subtitle);
+      font-weight: 950;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 12px 30px rgba(225, 0, 255, 0.26);
+      font-size: var(--font-body);
+      font-weight: 950;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+    }
+
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 0;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 5px;
+    }
+
+    .tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      border-radius: 8px;
+      padding: 0 14px;
+      color: rgba(255, 255, 255, 0.76);
+      font-size: var(--font-body);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tab-icon {
+      display: none;
+    }
+
+    .tab:hover,
+    .tab:focus-visible {
+      background: linear-gradient(135deg, rgba(225, 0, 255, 0.2), rgba(255, 0, 64, 0.18));
+      color: var(--text);
+      outline: none;
+    }
+
+    .login-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 12px 30px rgba(255, 0, 64, 0.24);
+      padding: 0 16px;
+      color: var(--text);
+      font-size: var(--font-body);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .login-cta:focus-visible {
+      outline: 3px solid rgba(225, 0, 255, 0.45);
+      outline-offset: 4px;
+    }
+
+    main {
+      position: relative;
+      display: grid;
+      min-height: 100svh;
+      place-items: center;
+      overflow: hidden;
+      padding: 128px 20px 40px;
+      background:
+        linear-gradient(135deg, rgba(225, 0, 255, 0.24), transparent 32%),
+        linear-gradient(315deg, rgba(255, 0, 64, 0.22), transparent 38%),
+        var(--background);
+    }
+
+    main::before {
+      position: absolute;
+      inset: 0;
+      content: "";
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(circle at center, black, transparent 72%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      width: min(920px, 100%);
+      justify-items: center;
+      gap: 34px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 900px;
+      font-size: var(--font-title);
+      font-weight: 950;
+      line-height: 1.15;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+
+    h2 {
+      font-size: var(--font-heading);
+    }
+
+    h3 {
+      font-size: var(--font-subtitle);
+    }
+
+    h2,
+    h3,
+    p {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 18px 42px rgba(255, 0, 64, 0.34);
+      padding: 0 28px;
+      color: var(--text);
+      font-size: var(--font-body);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .button:focus-visible {
+      outline: 3px solid rgba(225, 0, 255, 0.45);
+      outline-offset: 4px;
+    }
+
+    @media (min-width: 516px) and (max-width: 720px) {
+      header {
+        padding: 14px;
+      }
+
+      .header-inner {
+        gap: 10px;
+        padding: 10px 10px 10px 12px;
+      }
+
+      .header-actions {
+        gap: 8px;
+      }
+
+      .tab {
+        padding: 0 8px;
+      }
+
+      .login-cta {
+        padding: 0 12px;
+      }
+    }
+
+    @media (max-width: 515px) {
+      header {
+        padding: 14px;
+      }
+
+      .header-inner {
+        justify-content: flex-start;
+        min-height: 58px;
+        padding: 12px;
+        backdrop-filter: none;
+      }
+
+      .header-actions {
+        margin-left: auto;
+      }
+
+      .tabs {
+        position: fixed;
+        right: 14px;
+        bottom: 14px;
+        left: 14px;
+        z-index: 20;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+        width: auto;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.86);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.42);
+      }
+
+      .tab {
+        display: grid;
+        justify-items: center;
+        gap: 4px;
+        padding: 0 10px;
+        min-height: 56px;
+        font-size: 11px;
+        line-height: 1.1;
+      }
+
+      .tab-icon {
+        display: block;
+        width: 20px;
+        height: 20px;
+        color: var(--text);
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+
+      .login-cta {
+        min-height: 38px;
+        padding: 0 14px;
+      }
+
+      main {
+        padding: 104px 18px calc(112px + env(safe-area-inset-bottom));
+      }
+
+      .button {
+        width: min(100%, 320px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <a class="brand" href="./01-start.html" aria-label="Zac 시작 화면">
+        <span class="brand-mark" aria-hidden="true">Z</span>
+        <span>Zac</span>
+      </a>
+      <div class="header-actions">
+        <nav class="tabs" aria-label="주요 메뉴">
+          <a class="tab" href="./06-worlds-explore.html">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M3 12h18"></path>
+              <path d="M12 3c2.4 2.7 3.6 5.7 3.6 9s-1.2 6.3-3.6 9"></path>
+              <path d="M12 3c-2.4 2.7-3.6 5.7-3.6 9s1.2 6.3 3.6 9"></path>
+            </svg>
+            <span>세계관</span>
+          </a>
+          <a class="tab" href="./26-character-explore.html">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8" r="4"></circle>
+              <path d="M5 21c1.2-4 3.5-6 7-6s5.8 2 7 6"></path>
+            </svg>
+            <span>캐릭터</span>
+          </a>
+          <a class="tab" href="./07-works-explore.html">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 0-4-4z"></path>
+              <path d="M5 4v12"></path>
+              <path d="M9 8h6"></path>
+              <path d="M9 12h5"></path>
+            </svg>
+            <span>창작물</span>
+          </a>
+          <a class="tab" href="./05-workspace.html">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 6h6l2 3h8v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path>
+              <path d="M4 9h16"></path>
+            </svg>
+            <span>내 작업</span>
+          </a>
+        </nav>
+        <a class="login-cta" href="./03-login.html">로그인</a>
+      </div>
+    </div>
+  </header>
+
+  <main aria-labelledby="hero-title">
+    <div class="hero-content">
+      <h1 id="hero-title">설정이 늘어나도 구조는 단순하게.</h1>
+      <a class="button" href="./03-login.html">시작하기</a>
+    </div>
+  </main>
+</body>
+</html>
