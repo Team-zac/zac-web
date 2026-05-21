@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Work | Zac</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #000000;
+      --primary: #E100FF;
+      --secondary: #FF0040;
+      --text: #FFFFFF;
+      --muted: rgba(255, 255, 255, 0.68);
+      --panel: rgba(255, 255, 255, 0.055);
+      --font-title: 36px;
+      --font-heading: 28px;
+      --font-subtitle: 20px;
+      --font-body: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--background);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: var(--font-body);
+      line-height: 1.5;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10;
+      width: 100%;
+      padding: 20px;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      width: min(1120px, 100%);
+      min-height: 64px;
+      margin: 0 auto;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.78);
+      padding: 10px 12px 10px 18px;
+      backdrop-filter: blur(18px);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.38);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 40px;
+      font-size: var(--font-subtitle);
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 12px 30px rgba(225, 0, 255, 0.26);
+    }
+
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .tab,
+    .login-cta,
+    .button,
+    .ghost-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      border-radius: 8px;
+      padding: 0 16px;
+      font-size: var(--font-body);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .tab { color: var(--muted); }
+    .tab.active { color: var(--text); background: rgba(255, 255, 255, 0.1); }
+
+    .login-cta,
+    .button {
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 12px 30px rgba(255, 0, 64, 0.24);
+    }
+
+    .ghost-button {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    main {
+      position: relative;
+      padding: 124px 20px 72px;
+    }
+
+    main::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(225, 0, 255, 0.16), transparent 32%),
+        radial-gradient(circle at 82% 18%, rgba(255, 0, 64, 0.14), transparent 30%);
+      pointer-events: none;
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      gap: 28px;
+    }
+
+    .page-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding-bottom: 28px;
+    }
+
+    .back-button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+      margin: 0 0 10px;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .back-button svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2;
+    }
+
+    .eyebrow,
+    .chip {
+      display: inline-flex;
+      width: fit-content;
+      border: 1px solid rgba(225, 0, 255, 0.34);
+      border-radius: 999px;
+      background: rgba(225, 0, 255, 0.1);
+      padding: 5px 10px;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .eyebrow { margin: 0 0 12px; }
+
+    h1,
+    h2,
+    h3,
+    p { margin: 0; }
+
+    h1 { font-size: var(--font-title); line-height: 1.15; }
+    h2 { font-size: var(--font-heading); }
+    h3 { font-size: var(--font-subtitle); }
+
+    .lead {
+      max-width: 720px;
+      margin-top: 8px;
+      color: var(--muted);
+    }
+
+    .hero-actions,
+    .card-row,
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid.two {
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.42fr);
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .panel,
+    .card {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 22px;
+    }
+
+    .panel {
+      display: grid;
+      gap: 18px;
+      backdrop-filter: blur(18px);
+    }
+
+    .intro-panel {
+      grid-template-rows: auto auto minmax(0, 1fr);
+      min-height: 100%;
+    }
+
+    .card {
+      display: grid;
+      gap: 10px;
+    }
+
+    a.card,
+    a.list-item,
+    .chip-row .chip {
+      cursor: pointer;
+    }
+
+    .muted,
+    .mini { color: var(--muted); }
+
+    .mini { font-size: 13px; }
+
+    .markdown-doc {
+      display: grid;
+      gap: 16px;
+      border-radius: 8px;
+      background: #000;
+      padding: 24px;
+    }
+
+    .intro-panel .markdown-doc {
+      min-height: 0;
+      overflow-y: auto;
+      align-content: start;
+    }
+
+    .list {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .list-item {
+      display: grid;
+      grid-template-columns: max-content minmax(0, 1fr);
+      align-items: center;
+      gap: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .list-item .chip {
+      width: fit-content;
+      white-space: nowrap;
+    }
+
+    .list-item .mini {
+      display: block;
+      margin-top: 4px;
+    }
+
+    .avatar {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      font-weight: 950;
+    }
+
+    @media (max-width: 720px) {
+      header { padding: 14px; }
+      .header-inner { justify-content: flex-start; }
+      .tabs { display: none; }
+      main { padding: 104px 14px 72px; }
+      .page-hero,
+      .grid.two,
+      .grid.three { grid-template-columns: 1fr; }
+      .hero-actions { width: 100%; }
+      .button,
+      .ghost-button { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <a class="brand" href="./01-start.html"><span class="brand-mark">Z</span><span>Zac</span></a>
+      <nav class="tabs" aria-label="주요 탐색">
+        <a class="tab" href="./06-worlds-explore.html">세계관</a>
+        <a class="tab" href="./26-character-explore.html">캐릭터</a>
+        <a class="tab active" href="./07-works-explore.html">창작물</a>
+        <a class="tab" href="./05-workspace.html">내 작업</a>
+      </nav>
+      <a class="login-cta" href="./03-login.html">로그인</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="shell">
+      <section class="page-hero" aria-labelledby="page-title">
+        <div>
+          <button class="back-button" type="button" onclick="history.back()" aria-label="뒤로가기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="m12 19-7-7 7-7"></path></svg><span>뒤로가기</span></button>
+          <p class="eyebrow">Work</p>
+          <h1 id="page-title">검은 등대의 밤</h1>
+          <p class="lead">항구 감시단과 검은 등대의 첫 충돌을 다루는 챕터형 소설입니다.</p>
+        </div>
+        <div class="hero-actions">
+          <a class="button" href="./23-work-reader.html">창작물 읽기</a>
+          <a class="ghost-button" href="./24-work-edit.html">정보 수정</a>
+        </div>
+      </section>
+
+      <section class="grid two">
+        <article class="panel intro-panel">
+          <div class="card-row">
+            <span class="chip">Novel</span>
+            <span class="mini">조회 7.5k</span>
+          </div>
+          <h2>소개</h2>
+          <div class="markdown-doc">
+            <p>검은 등대의 불빛이 꺼진 밤, 항구 감시단은 기록되지 않은 밀수 항로와 마주합니다.</p>
+            <p>아린 레이븐은 사라진 장부의 흔적을 따라가며 검은 등대, 밀수 연합, 항구 감시단 사이에 숨겨진 오래된 계약을 파헤칩니다.</p>
+          </div>
+        </article>
+
+        <aside class="panel">
+          <h2>연결 정보</h2>
+          <a class="card" href="./09-world-detail.html" aria-label="달빛 항구 연대기 세계관 상세 보기">
+            <span class="mini">세계관</span>
+            <h3>달빛 항구 연대기</h3>
+            <p class="muted">항구 감시단과 검은 등대 전설이 얽힌 공동 창작 세계관입니다.</p>
+          </a>
+          <div class="card">
+            <span class="mini">등장인물</span>
+            <div class="chip-row">
+              <a class="chip" href="./14-character-detail.html">아린 레이븐</a>
+              <a class="chip" href="./14-character-detail.html">카엘 문</a>
+              <a class="chip" href="./14-character-detail.html">세라 바인</a>
+              <a class="chip" href="./14-character-detail.html">노아 그레이</a>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="panel">
+        <div class="card-row">
+          <h2>챕터 목록</h2>
+          <span class="chip">3 Chapters</span>
+        </div>
+        <ul class="list">
+          <li>
+            <a class="list-item" href="./23-work-reader.html#chapter-1" aria-label="1챕터 읽기">
+            <span class="chip">Chapter 1</span>
+            <span><strong>항구에 드리운 검은 빛</strong><span class="mini">첫 단서와 검은 등대의 표식</span></span>
+            </a>
+          </li>
+          <li>
+            <a class="list-item" href="./23-work-reader.html#chapter-2" aria-label="2챕터 읽기">
+            <span class="chip">Chapter 2</span>
+            <span><strong>등대 아래의 거래</strong><span class="mini">밀수 연합과 감시단의 과거 계약</span></span>
+            </a>
+          </li>
+          <li>
+            <a class="list-item" href="./23-work-reader.html#chapter-3" aria-label="3챕터 읽기">
+            <span class="chip">Chapter 3</span>
+            <span><strong>새벽 회의</strong><span class="mini">공동 창작자들이 정리한 다음 사건의 갈림길</span></span>
+            </a>
+          </li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
