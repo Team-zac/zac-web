@@ -1,0 +1,500 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Visibility {
+  PRIVATE
+  SHARED
+  PUBLIC
+}
+
+enum WorldRole {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+enum AffiliationType {
+  COUNTRY
+  ORGANIZATION
+  FACTION
+  FAMILY
+  SCHOOL
+  GUILD
+  SPECIES
+  FORCE
+  OTHER
+}
+
+enum CharacterAffiliationStatus {
+  CURRENT
+  FORMER
+  UNKNOWN
+}
+
+enum RelationDirection {
+  DIRECTED
+  BIDIRECTIONAL
+}
+
+enum RelationStatus {
+  ACTIVE
+  PAST
+  RUMORED
+  ENDED
+  UNKNOWN
+}
+
+enum WorkType {
+  NOVEL
+  ROLEPLAY
+  SETTING_NOTE
+  SHORT_STORY
+  EPISODE
+  OTHER
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum WorkCharacterRole {
+  MAIN
+  SUPPORTING
+  MENTIONED
+  POV
+  OTHER
+}
+
+enum TagScope {
+  GLOBAL
+  WORLD
+}
+
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String?   @db.VarChar(80)
+  email         String?   @unique @db.Citext
+  emailVerified DateTime? @map("email_verified") @db.Timestamptz(6)
+  image         String?   @db.Text
+  passwordHash  String?   @map("password_hash") @db.Text
+  bio           String?   @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  accounts           Account[]
+  sessions           Session[]
+  ownedWorlds        World[]        @relation("WorldOwner")
+  worldMemberships   WorldMember[]
+  invitedMemberships WorldMember[]  @relation("WorldMemberInviter")
+  sentInvites        WorldInvite[]  @relation("WorldInviteSender")
+  acceptedInvites    WorldInvite[]  @relation("WorldInvitee")
+  createdCharacters  Character[]    @relation("CharacterCreator")
+  authoredWorks      Work[]         @relation("WorkAuthor")
+  createdRelations   CharacterRelation[] @relation("RelationCreator")
+  createdTags        Tag[]          @relation("TagCreator")
+
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  type              String  @db.VarChar(40)
+  provider          String  @db.VarChar(80)
+  providerAccountId String  @map("provider_account_id") @db.VarChar(255)
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String? @db.VarChar(40)
+  scope             String? @db.Text
+  id_token          String? @db.Text
+  session_state     String? @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionToken String   @unique @map("session_token") @db.Text
+  userId       String   @map("user_id") @db.Uuid
+  expires      DateTime @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expires])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String   @db.Text
+  token      String   @unique @db.Text
+  expires    DateTime @db.Timestamptz(6)
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model World {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId       String     @map("owner_id") @db.Uuid
+  title         String     @db.VarChar(120)
+  slug          String     @unique @db.VarChar(160)
+  description   String?    @db.Text
+  genre         String?    @db.VarChar(80)
+  coverImageUrl String?    @map("cover_image_url") @db.Text
+  visibility    Visibility @default(PRIVATE)
+  settings      Json       @default("{}") @db.JsonB
+  viewCount     BigInt     @default(0) @map("view_count")
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  owner        User                @relation("WorldOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  members      WorldMember[]
+  invites      WorldInvite[]
+  characters   Character[]
+  affiliations Affiliation[]
+  characterAffiliations CharacterAffiliation[]
+  relations    CharacterRelation[]
+  works        Work[]
+  workChapters WorkChapter[]
+  workCharacters WorkCharacter[]
+  workAffiliations WorkAffiliation[]
+  tags         Tag[]
+  worldTags    WorldTag[]
+
+  @@index([ownerId, updatedAt])
+  @@index([visibility, updatedAt])
+  @@index([visibility, viewCount, updatedAt])
+  @@index([deletedAt])
+  @@map("worlds")
+}
+
+model WorldMember {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  worldId     String    @map("world_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  role        WorldRole
+  invitedById String?   @map("invited_by_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  world     World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  user      User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitedBy User? @relation("WorldMemberInviter", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@unique([worldId, userId])
+  @@index([userId, role])
+  @@index([worldId, role])
+  @@map("world_members")
+}
+
+model WorldInvite {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  worldId     String       @map("world_id") @db.Uuid
+  email       String       @db.Citext
+  role        WorldRole    @default(VIEWER)
+  status      InviteStatus @default(PENDING)
+  token       String       @unique @db.Text
+  invitedById String       @map("invited_by_id") @db.Uuid
+  acceptedById String?     @map("accepted_by_id") @db.Uuid
+  expiresAt   DateTime?    @map("expires_at") @db.Timestamptz(6)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  world      World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  invitedBy  User  @relation("WorldInviteSender", fields: [invitedById], references: [id], onDelete: Restrict)
+  acceptedBy User? @relation("WorldInvitee", fields: [acceptedById], references: [id], onDelete: SetNull)
+
+  @@unique([worldId, email, status])
+  @@index([email, status])
+  @@index([worldId, status])
+  @@map("world_invites")
+}
+
+model Character {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  worldId         String     @map("world_id") @db.Uuid
+  createdById     String?    @map("created_by_id") @db.Uuid
+  name            String     @db.VarChar(120)
+  alias           String?    @db.VarChar(120)
+  profileImageUrl String?    @map("profile_image_url") @db.Text
+  summary         String?    @db.VarChar(255)
+  description     String?    @db.Text
+  personality     String?    @db.Text
+  background      String?    @db.Text
+  visibility      Visibility @default(PRIVATE)
+  viewCount       BigInt     @default(0) @map("view_count")
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  world               World                  @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  createdBy           User?                  @relation("CharacterCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  affiliations        CharacterAffiliation[]
+  sourceRelations     CharacterRelation[]    @relation("RelationSource")
+  targetRelations     CharacterRelation[]    @relation("RelationTarget")
+  workCharacters      WorkCharacter[]
+  characterTags       CharacterTag[]
+
+  @@index([worldId, updatedAt])
+  @@index([worldId, visibility, updatedAt])
+  @@index([visibility, viewCount, updatedAt])
+  @@index([deletedAt])
+  @@map("characters")
+}
+
+model Affiliation {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  worldId        String          @map("world_id") @db.Uuid
+  parentId       String?         @map("parent_id") @db.Uuid
+  name           String          @db.VarChar(120)
+  type           AffiliationType @default(OTHER)
+  description    String?         @db.Text
+  symbolImageUrl String?         @map("symbol_image_url") @db.Text
+  color          String?         @db.VarChar(20)
+  visibility     Visibility      @default(PRIVATE)
+  viewCount      BigInt          @default(0) @map("view_count")
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?       @map("deleted_at") @db.Timestamptz(6)
+
+  world                 World                  @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  parent                Affiliation?           @relation("AffiliationHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children              Affiliation[]          @relation("AffiliationHierarchy")
+  characterAffiliations CharacterAffiliation[]
+  contextRelations      CharacterRelation[]    @relation("RelationContextAffiliation")
+  workAffiliations      WorkAffiliation[]
+
+  @@index([worldId, updatedAt])
+  @@index([worldId, type])
+  @@index([visibility, viewCount, updatedAt])
+  @@index([parentId])
+  @@index([deletedAt])
+  @@map("affiliations")
+}
+
+model CharacterAffiliation {
+  id            String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  worldId       String                     @map("world_id") @db.Uuid
+  characterId   String                     @map("character_id") @db.Uuid
+  affiliationId String                     @map("affiliation_id") @db.Uuid
+  title         String?                    @db.VarChar(120)
+  rank          String?                    @db.VarChar(120)
+  status        CharacterAffiliationStatus @default(CURRENT)
+  startedLabel  String?                    @map("started_label") @db.VarChar(120)
+  endedLabel    String?                    @map("ended_label") @db.VarChar(120)
+  note          String?                    @db.Text
+  isPrimary     Boolean                    @default(false) @map("is_primary")
+  createdAt     DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  world       World       @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  character   Character   @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  affiliation Affiliation @relation(fields: [affiliationId], references: [id], onDelete: Cascade)
+
+  @@index([worldId, status])
+  @@index([worldId, characterId, isPrimary])
+  @@index([characterId, status])
+  @@index([affiliationId, status])
+  @@map("character_affiliations")
+}
+
+model CharacterRelation {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  worldId              String            @map("world_id") @db.Uuid
+  sourceCharacterId    String            @map("source_character_id") @db.Uuid
+  targetCharacterId    String            @map("target_character_id") @db.Uuid
+  contextAffiliationId String?           @map("context_affiliation_id") @db.Uuid
+  createdById          String?           @map("created_by_id") @db.Uuid
+  name                 String            @db.VarChar(120)
+  description          String?           @db.Text
+  direction            RelationDirection @default(DIRECTED)
+  status               RelationStatus    @default(ACTIVE)
+  visibility           Visibility        @default(PRIVATE)
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt            DateTime?         @map("deleted_at") @db.Timestamptz(6)
+
+  world              World        @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  sourceCharacter    Character    @relation("RelationSource", fields: [sourceCharacterId], references: [id], onDelete: Cascade)
+  targetCharacter    Character    @relation("RelationTarget", fields: [targetCharacterId], references: [id], onDelete: Cascade)
+  contextAffiliation Affiliation? @relation("RelationContextAffiliation", fields: [contextAffiliationId], references: [id], onDelete: SetNull)
+  createdBy          User?        @relation("RelationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([worldId, updatedAt])
+  @@index([worldId, deletedAt, updatedAt])
+  @@index([sourceCharacterId])
+  @@index([targetCharacterId])
+  @@index([contextAffiliationId])
+  @@index([deletedAt])
+  @@map("character_relations")
+}
+
+model Work {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  worldId       String        @map("world_id") @db.Uuid
+  authorId      String?       @map("author_id") @db.Uuid
+  title         String        @db.VarChar(160)
+  type          WorkType      @default(NOVEL)
+  summary       String?       @db.VarChar(255)
+  description   String?       @db.Text
+  coverImageUrl String?       @map("cover_image_url") @db.Text
+  visibility    Visibility    @default(PRIVATE)
+  publishStatus PublishStatus @default(DRAFT) @map("publish_status")
+  isOfficial    Boolean       @default(false) @map("is_official")
+  viewCount     BigInt        @default(0) @map("view_count")
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  world            World             @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  author           User?             @relation("WorkAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  chapters         WorkChapter[]
+  workCharacters   WorkCharacter[]
+  workAffiliations WorkAffiliation[]
+  workTags         WorkTag[]
+
+  @@index([worldId, updatedAt])
+  @@index([worldId, publishStatus, updatedAt])
+  @@index([visibility, publishStatus, viewCount, updatedAt])
+  @@index([visibility, viewCount, updatedAt])
+  @@index([deletedAt])
+  @@map("works")
+}
+
+model WorkChapter {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  worldId       String        @map("world_id") @db.Uuid
+  workId        String        @map("work_id") @db.Uuid
+  number        Int
+  title         String        @db.VarChar(160)
+  body          String        @db.Text
+  visibility    Visibility    @default(PRIVATE)
+  publishStatus PublishStatus @default(DRAFT) @map("publish_status")
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  work  Work  @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  @@unique([workId, number])
+  @@index([worldId, updatedAt])
+  @@index([workId, deletedAt, number])
+  @@index([workId, publishStatus])
+  @@index([deletedAt])
+  @@map("work_chapters")
+}
+
+model WorkCharacter {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  worldId     String            @map("world_id") @db.Uuid
+  workId      String            @map("work_id") @db.Uuid
+  characterId String            @map("character_id") @db.Uuid
+  role        WorkCharacterRole @default(SUPPORTING)
+  note        String?           @db.Text
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  world     World     @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  work      Work      @relation(fields: [workId], references: [id], onDelete: Cascade)
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([workId, characterId])
+  @@index([worldId])
+  @@index([characterId])
+  @@map("work_characters")
+}
+
+model WorkAffiliation {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  worldId       String   @map("world_id") @db.Uuid
+  workId        String   @map("work_id") @db.Uuid
+  affiliationId String   @map("affiliation_id") @db.Uuid
+  note          String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  world       World       @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  work        Work        @relation(fields: [workId], references: [id], onDelete: Cascade)
+  affiliation Affiliation @relation(fields: [affiliationId], references: [id], onDelete: Cascade)
+
+  @@unique([workId, affiliationId])
+  @@index([worldId])
+  @@index([affiliationId])
+  @@map("work_affiliations")
+}
+
+model Tag {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  worldId     String?  @map("world_id") @db.Uuid
+  name        String   @db.VarChar(80)
+  normalized  String   @db.VarChar(80)
+  scope       TagScope @default(GLOBAL)
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  world         World?         @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  createdBy     User?          @relation("TagCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  worldTags     WorldTag[]
+  characterTags CharacterTag[]
+  workTags      WorkTag[]
+
+  @@unique([worldId, normalized, scope])
+  @@index([normalized])
+  @@map("tags")
+}
+
+model WorldTag {
+  worldId String @map("world_id") @db.Uuid
+  tagId   String @map("tag_id") @db.Uuid
+
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([worldId, tagId])
+  @@map("world_tags")
+}
+
+model CharacterTag {
+  characterId String @map("character_id") @db.Uuid
+  tagId       String @map("tag_id") @db.Uuid
+
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([characterId, tagId])
+  @@map("character_tags")
+}
+
+model WorkTag {
+  workId String @map("work_id") @db.Uuid
+  tagId  String @map("tag_id") @db.Uuid
+
+  work Work @relation(fields: [workId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([workId, tagId])
+  @@map("work_tags")
+}
