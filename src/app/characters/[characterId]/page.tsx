@@ -9,13 +9,81 @@ import { Chip } from "@/components/ui/chip";
 import { EntityLabel } from "@/components/ui/entity-label";
 import { MarkdownViewer } from "@/components/ui/markdown-viewer";
 import { BackButton } from "@/components/ui/back-button";
+import { RelationGraph } from "@/components/relations/relation-graph";
 import { getCharacterDetail } from "@/features/characters/data";
+import { getRelationGraphData } from "@/features/relations/data";
 import { createSeoMetadata } from "@/lib/seo";
 import { getAuthSession } from "@/server/auth";
 import { getWorldRole } from "@/server/permissions";
 
 const panel =
   "rounded-lg border border-white/15 bg-white/[0.055] p-[22px] shadow-[0_22px_54px_rgba(0,0,0,0.26)] backdrop-blur-xl";
+
+type ResourceCard = {
+  description: string;
+  href: string;
+  label: string;
+  meta: string;
+  title: string;
+};
+
+function ResourceSection({
+  cards,
+  createHref,
+  createLabel,
+  emptyText,
+  secondaryHref,
+  secondaryLabel,
+  title,
+}: {
+  cards: ResourceCard[];
+  createHref?: string;
+  createLabel?: string;
+  emptyText: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
+  title: string;
+}) {
+  return (
+    <section className={panel}>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-[28px] font-black">{title}</h2>
+        <div className="flex gap-2">
+          {createHref && createLabel ? (
+            <ButtonLink href={createHref} tone="primary">
+              {createLabel}
+            </ButtonLink>
+          ) : null}
+          {secondaryHref && secondaryLabel ? (
+            <ButtonLink href={secondaryHref}>{secondaryLabel}</ButtonLink>
+          ) : null}
+        </div>
+      </div>
+      {cards.length ? (
+        <div className="grid grid-flow-col auto-cols-[minmax(260px,320px)] gap-3.5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {cards.map((card) => (
+            <Link
+              className="grid min-h-[210px] gap-3 rounded-lg border border-white/15 bg-white/[0.055] p-[18px] outline-none hover:border-[#E100FF]/50"
+              href={card.href}
+              key={card.href}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <Chip>{card.label}</Chip>
+                <span className="text-[13px] text-white/65">{card.meta}</span>
+              </div>
+              <h3 className="text-xl font-black">{card.title}</h3>
+              <p className="line-clamp-3 leading-relaxed text-white/65">{card.description}</p>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="grid min-h-32 place-items-center rounded-lg border border-dashed border-white/15 text-white/60">
+          {emptyText}
+        </div>
+      )}
+    </section>
+  );
+}
 
 export async function generateMetadata({
   params,
@@ -42,11 +110,9 @@ export default async function CharacterDetailPage({
 }: {
   params: Promise<{ characterId: string }>;
 }) {
-  const [t, common, roles, cards] = await Promise.all([
+  const [t, common] = await Promise.all([
     getTranslations("characters.detail"),
     getTranslations("common"),
-    getTranslations("works.form.roles"),
-    getTranslations("cards.workTypes"),
   ]);
   const { characterId } = await params;
   const character = await getCharacterDetail(characterId).catch(() => null);
@@ -68,33 +134,14 @@ export default async function CharacterDetailPage({
     FORMER: t("affiliationStatuses.former"),
     UNKNOWN: t("affiliationStatuses.unknown"),
   };
-  const workRoleLabel: Record<string, string> = {
-    MAIN: roles("main"),
-    MENTIONED: roles("mentioned"),
-    OTHER: roles("other"),
-    POV: roles("pov"),
-    SUPPORTING: roles("supporting"),
-  };
-  const workTypeLabel: Record<string, string> = {
-    EPISODE: cards("episode"),
-    NOVEL: cards("novel"),
-    OTHER: cards("other"),
-    ROLEPLAY: cards("roleplay"),
-    SETTING_NOTE: cards("settingNote"),
-    SHORT_STORY: cards("shortStory"),
-  };
-  const relations = [
-    ...character.sourceRelations.map((relation) => ({
-      id: relation.id,
-      name: relation.name,
-      other: relation.targetCharacter,
-    })),
-    ...character.targetRelations.map((relation) => ({
-      id: relation.id,
-      name: relation.name,
-      other: relation.sourceCharacter,
-    })),
-  ];
+  const relationGraph = await getRelationGraphData(character.worldId).catch(() => null);
+  const works: ResourceCard[] = character.workCharacters.map(({ work }) => ({
+    description: work.summary ?? t("workDescriptionEmpty"),
+    href: `/works/${work.id}`,
+    label: work.type,
+    meta: common("views", { count: (Number(work.viewCount ?? 0)).toLocaleString() }),
+    title: work.title,
+  }));
   return (
     <PageShell activeKey="characters">
       <CharacterViewTracker characterId={characterId} />
@@ -186,86 +233,30 @@ export default async function CharacterDetailPage({
           </div>
         ) : null}
       </section>
-      <section className={panel}>
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <h2 className="text-[28px] font-black">{t("works")}</h2>
-          <div className="flex gap-2">
-            {canEdit ? (
-              <ButtonLink
-                href={`/works/new?worldId=${character.worldId}`}
-                tone="primary"
-              >
-                {t("createWork")}
-              </ButtonLink>
-            ) : null}
-            <ButtonLink href="/works">{t("viewAll")}</ButtonLink>
+      <ResourceSection
+        cards={works}
+        createHref={canEdit ? `/works/new?worldId=${character.worldId}` : undefined}
+        createLabel={t("createWork")}
+        emptyText={t("noWorks")}
+        secondaryHref="/works"
+        secondaryLabel={t("viewAll")}
+        title={t("works")}
+      />
+      {relationGraph ? (
+        <RelationGraph compact data={relationGraph} />
+      ) : (
+        <section className={panel}>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-[28px] font-black">{t("relations")}</h2>
+            <ButtonLink className="min-h-[30px] px-3 text-[13px]" href={`/relations?worldId=${character.worldId}`}>
+              {t("openRelations")}
+            </ButtonLink>
           </div>
-        </div>
-        {character.workCharacters.length ? (
-          <div className="grid grid-flow-col auto-cols-[minmax(260px,320px)] gap-3.5 overflow-x-auto">
-            {character.workCharacters.map(({ role: workRole, work }) => (
-              <Link
-                className="grid min-h-[200px] gap-3 rounded-lg border border-white/15 p-[18px]"
-                href={`/works/${work.id}`}
-                key={work.id}
-              >
-                <div className="flex justify-between">
-                  <Chip>{workTypeLabel[work.type]}</Chip>
-                  <span className="text-[13px] text-white/65">
-                    {workRoleLabel[workRole]}
-                  </span>
-                </div>
-                <h3 className="text-xl font-black">{work.title}</h3>
-                <p className="text-white/65">
-                  {work.summary ?? t("workDescriptionEmpty")}
-                </p>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="grid min-h-36 place-items-center rounded-lg border border-dashed border-white/15 text-white/60">
-            {t("noWorks")}
-          </div>
-        )}
-      </section>
-      <section className={panel}>
-        <div className="mb-5 flex justify-between">
-          <h2 className="text-[28px] font-black">{t("relations")}</h2>
-          <ButtonLink href={`/relations?worldId=${character.worldId}`}>
-            {t("openRelations")}
-          </ButtonLink>
-        </div>
-        {relations.length ? (
-          <div className="relative min-h-[460px] overflow-auto rounded-lg border border-white/15 bg-[radial-gradient(circle_at_28%_24%,rgba(225,0,255,.24),transparent_22%),radial-gradient(circle_at_72%_76%,rgba(255,0,64,.22),transparent_24%)]">
-            <div className="absolute top-1/2 left-1/2 grid w-36 -translate-1/2 gap-1 rounded-lg border border-[#E100FF]/50 bg-black/80 p-3">
-              <strong>{character.name}</strong>
-              <span className="text-[13px] text-white/65">
-                {primary?.affiliation.name ?? t("noAffiliation")}
-              </span>
-            </div>
-            {relations.slice(0, 6).map((relation, index) => (
-              <Link
-                className="absolute grid w-36 gap-1 rounded-lg border border-white/15 bg-black/80 p-3"
-                href={`/characters/${relation.other.id}`}
-                key={relation.id}
-                style={{
-                  left: `${15 + (index % 3) * 32}%`,
-                  top: `${15 + Math.floor(index / 3) * 62}%`,
-                }}
-              >
-                <strong>{relation.other.name}</strong>
-                <span className="text-[13px] text-white/65">
-                  {relation.name}
-                </span>
-              </Link>
-            ))}
-          </div>
-        ) : (
           <div className="grid min-h-52 place-items-center rounded-lg border border-dashed border-white/15 text-white/60">
             {t("noRelations")}
           </div>
-        )}
-      </section>
+        </section>
+      )}
     </PageShell>
   );
 }
