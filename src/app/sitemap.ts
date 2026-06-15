@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/seo";
 import { prisma } from "@/server/db";
 
+export const dynamic = "force-dynamic";
+
 const staticRoutes = [
   "/",
   "/home",
